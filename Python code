@@ -1,0 +1,62 @@
+# sentiment_analysis.py
+
+import pandas as pd
+import string
+import nltk
+from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# Download stopwords
+nltk.download('stopwords')
+
+# Sample data (you can replace this with your CSV)
+data = {
+    'text': [
+        "I love this product!", 
+        "This is the worst thing ever.", 
+        "Absolutely fantastic experience.", 
+        "Not good, not bad, just okay.",
+        "Terrible support and bad quality.",
+        "Great service, will come again!"
+    ],
+    'label': ['positive', 'negative', 'positive', 'neutral', 'negative', 'positive']
+}
+
+df = pd.DataFrame(data)
+
+# Preprocess text
+def clean_text(text):
+    stop_words = set(stopwords.words('english'))
+    text = text.lower()
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    tokens = text.split()
+    filtered = [word for word in tokens if word not in stop_words]
+    return " ".join(filtered)
+
+df['clean_text'] = df['text'].apply(clean_text)
+
+# Vectorization
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df['clean_text'])
+y = df['label']
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train model
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+# Evaluate
+y_pred = model.predict(X_test)
+
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nAccuracy Score:", accuracy_score(y_test, y_pred))
